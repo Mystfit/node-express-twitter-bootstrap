@@ -14,7 +14,7 @@ var init = function(port) {
 
     app.configure(function(){
     	app.set('views', __dirname + '/views');
-    	app.set('view engine', 'ejs');
+    	app.set('view engine', 'jade');
     	app.use(express.bodyParser());
     	app.use(express.methodOverride());
     	app.use(express.static(__dirname + '/static'));
@@ -45,7 +45,8 @@ app.get('/', function(req,res){
 
     console.log("Request recieved");
 
-    res.render('template.ejs', locals);
+    //res.render('template.ejs', locals);
+    res.render('index.jade', locals);
     //res.send("Hello world");
 });
 
