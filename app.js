@@ -46,6 +46,157 @@ app.listen(port);
 console.log("Listening on port %d in %s mode", port, app.settings.env);
 
 
+
+//==================
+//Request functions
+//------------------
+app.get('/', function(req,res){
+    locals.date = new Date().toLocaleDateString();
+    res.render('index.jade', locals);
+});
+
+app.get('/forceNode', function(req,res){
+    locals.date = new Date().toLocaleDateString();
+    res.render('forceNode.jade', locals);
+});
+
+app.get('/stackedGraph', function(req,res){
+    locals.date = new Date().toLocaleDateString();
+    res.render('stackedGraph.jade', locals);
+});
+
+app.get('/binPacking', function(req,res){
+    locals.date = new Date().toLocaleDateString();
+    res.render('binPacking.jade', locals);
+});
+
+
+//------------------------------------
+//Returns json datasets for meters
+app.get('/getRaw', function(req,res)
+{
+    queryMeter = url.parse(req.url, true).query.meter;
+
+    var callback = function(meter){
+        var meterData;
+        if(queryMeter == "controlled")
+            meterData = meter.controlled;
+        else
+            meterData = meter.uncontrolled;
+        
+        res.send(meterData);
+    }
+
+    loadCSV(csvFile, callback);
+});
+
+app.get('/getAveragedHours', function(req,res)
+{
+    parseMeterData(
+        url.parse(req.url, true).query.startDate, 
+        url.parse(req.url, true).query.endDate,
+        "averagedHours",
+        function(parsedJson){res.send(parsedJson)}
+    );   
+});
+
+app.get('/getSummedDays', function(req,res)
+{
+    parseMeterData(
+        url.parse(req.url, true).query.startDate, 
+        url.parse(req.url, true).query.endDate,
+        "summedDays",
+        function(parsedJson){res.send(parsedJson)}
+    );   
+});
+
+
+
+//--------------------------------------------------------------------------
+//Returns summed average across entire dataset for meter in a 24 hour period
+
+parseMeterData = function(startDate,endDate,action,parsedCallback)
+{ 
+    var useDates = false;
+    
+    if(startDate != undefined && endDate != undefined)
+        useDates = true;
+
+    if(action == undefined)
+        action = "summedDays";
+
+
+    var jsonCallback = function(meter, action)
+    {
+        var timeValues = [];
+        if(action == "averagedHours") for(var i = 0; i < 48; i++) timeValues.push(0.0);
+        var index = 0;
+        var endIndex = meter.uncontrolled.meterData.length;
+        var numEntries = meter.uncontrolled.meterData.length;
+
+        dateIndex = function(dateString, target){
+            var result = -1;
+            for(var i = 0; i < target.length; i++){
+                if(target[i].date == dateString){
+                    result = i;
+                    return result;
+                }
+            }
+
+            return result;
+        }
+        //20100917, 20120801, 20120804
+
+        if(useDates){
+            index = dateIndex(startDate, meter.uncontrolled.meterData);
+            endIndex = dateIndex(endDate, meter.uncontrolled.meterData);
+            numEntries = endIndex - index;
+
+            if(index == -1){
+                console.log("Couldn't find start date");
+                index = 0;
+            }
+            
+            if( endIndex == -1){
+                console.log("Couldn't find end date");
+                endIndex = meter.uncontrolled.meterData.length;
+            }
+        }
+
+        for(index; index < endIndex; index++)
+        {  
+
+            var entry = meter.uncontrolled.meterData[index].dayValues;
+            var sum = 0;
+            var nullCount = 0;
+            
+            for(var timeEntry in entry){
+                if(entry[timeEntry] != null){
+                    if(action == "averagedHours") timeValues[timeEntry] += parseFloat(entry[timeEntry]);
+                    else if(action == "summedDays") sum += parseFloat(entry[timeEntry]);
+
+                } else {nullCount++;}
+            } 
+
+            if(action == "summedDays") { 
+                timeValues.push(sum); 
+            }
+        }   
+
+        if(action == "averagedHours"){ 
+            for (var timeValue in timeValues) {
+                timeValues[timeValue] /= numEntries; 
+            }
+        }
+
+        parsedCallback({id:meter.uncontrolled.id, meterData:timeValues});
+    }
+
+    loadCSV(csvFile, jsonCallback, action);
+}
+
+
+
 loadCSV = function(csvFile, callback, action)
 {
     dataCallback = function(jsonObj)
@@ -88,131 +239,6 @@ loadCSV = function(csvFile, callback, action)
     );
 }
 
-
-//==================
-//Request functions
-//------------------
-app.get('/', function(req,res){
-
-    console.log("Request recieved");
-
-    locals.date = new Date().toLocaleDateString();
-    res.render('index.jade', locals);
-});
-
-
-app.get('/stackedGraph', function(req,res){
-
-    console.log("Stacked graph request recieved");
-
-    locals.date = new Date().toLocaleDateString();
-    res.render('stackedGraph.jade', locals);
-});
-
-
-//------------------------------------
-//Returns entire dataset for one meter
-
-app.get('/getEntireRange', function(req,res)
-{
-    var callback = function(meter){
-        res.send(meter.uncontrolled);
-    }
-
-    loadCSV(csvFile, callback);
-});
-
-
-
-//--------------------------------------------------------------------------
-//Returns summed average across entire dataset for meter in a 24 hour period
-
-app.get('/getDayValues', function(req,res)
-{ 
-    var startDate = url.parse(req.url, true).query.startDate;
-    var endDate = url.parse(req.url, true).query.endDate;
-    var action = url.parse(req.url, true).query.action;
-    var useDates = false;
-    
-    if(startDate != undefined && endDate != undefined)
-        useDates = true;
-
-    if(action == undefined)
-        action = "summedDays";
-
-
-
-    var callback = function(meter, action)
-    {
-        var timeValues = [];
-        if(action == "averageDay") for(var i = 0; i < 48; i++) timeValues.push(0.0);
-        var index = 0;
-        var endIndex = meter.uncontrolled.meterData.length;
-        var numEntries = meter.uncontrolled.meterData.length;
-
-        dateIndex = function(dateString, target){
-            var result = -1;
-            for(var i = 0; i < target.length; i++){
-                if(target[i].date == dateString){
-                    result = i;
-                    return result;
-                }
-            }
-
-            return result;
-        }
-        //20100917, 20120801, 20120804
-
-        if(useDates){
-            index = dateIndex(startDate, meter.uncontrolled.meterData);
-            endIndex = dateIndex(endDate, meter.uncontrolled.meterData);
-            numEntries = endIndex - index;
-            console.log(i);
-            console.log(endIndex);
-            console.log(numEntries);
-
-            if(index == -1){
-                console.log("Couldn't find start date");
-                index = 0;
-            }
-            
-            if( endIndex == -1){
-                console.log("Couldn't find end date");
-                endIndex = meter.uncontrolled.meterData.length;
-            }
-        }
-
-        for(index; index < endIndex; index++)
-        {  
-
-            var entry = meter.uncontrolled.meterData[index].dayValues;
-            var sum = 0;
-            var nullCount = 0;
-            
-            for(var timeEntry in entry){
-                if(entry[timeEntry] != null){
-                    if(action == "averageDay") timeValues[timeEntry] += parseFloat(entry[timeEntry]);
-                    else if(action == "summedDays") sum += parseFloat(entry[timeEntry]);
-
-                } else {nullCount++;}
-            } 
-
-            if(action == "summedDays") { 
-                timeValues.push(sum); 
-            }
-        }   
-
-        if(action == "averageDay"){ 
-            for (var timeValue in timeValues) {
-                timeValues[timeValue] /= numEntries; 
-            }
-        }
-
-        res.send({id:meter.uncontrolled.id, meterData:timeValues});
-    }
-
-    loadCSV(csvFile, callback, action);
-});
 
 
 /* The 404 Route (ALWAYS Keep this as the last route) */
