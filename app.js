@@ -46,7 +46,7 @@ app.listen(port);
 console.log("Listening on port %d in %s mode", port, app.settings.env);
 
 
-loadCSV = function(csvFile, callback)
+loadCSV = function(csvFile, callback, action)
 {
     dataCallback = function(jsonObj)
     {
@@ -77,8 +77,7 @@ loadCSV = function(csvFile, callback)
 
             targetMeter.meterData.push(meterData);
         }
-
-        callback({uncontrolled:uncontrolledMeter, controlled:controlledMeter});
+        callback({uncontrolled:uncontrolledMeter, controlled:controlledMeter}, action);
     };
 
     //Load static csv file
@@ -124,31 +123,30 @@ app.get('/getEntireRange', function(req,res)
 });
 
 
+
 //--------------------------------------------------------------------------
 //Returns summed average across entire dataset for meter in a 24 hour period
 
-app.get('/getAverageDayValues', function(req,res)
+app.get('/getDayValues', function(req,res)
 { 
     var startDate = url.parse(req.url, true).query.startDate;
     var endDate = url.parse(req.url, true).query.endDate;
-
-    console.log("Start:" + startDate + " End:" + endDate);
-
+    var action = url.parse(req.url, true).query.action;
     var useDates = false;
     
     if(startDate != undefined && endDate != undefined)
         useDates = true;
 
+    if(action == undefined)
+        action = "summedDays";
 
-    var callback = function(meter)
+
+
+    var callback = function(meter, action)
     {
         var timeValues = [];
-
-        for(var i = 0; i < 48; i++){
-            timeValues.push(0.0);
-        }
-        
-        var i = 0;
+        if(action == "averageDay") for(var i = 0; i < 48; i++) timeValues.push(0.0);
+        var index = 0;
         var endIndex = meter.uncontrolled.meterData.length;
         var numEntries = meter.uncontrolled.meterData.length;
 
@@ -166,46 +164,54 @@ app.get('/getAverageDayValues', function(req,res)
         //20100917, 20120801, 20120804
 
         if(useDates){
-            console.log("Using Dates");
-            i = dateIndex(startDate, meter.uncontrolled.meterData);
+            index = dateIndex(startDate, meter.uncontrolled.meterData);
             endIndex = dateIndex(endDate, meter.uncontrolled.meterData);
-            numEntries = endIndex - i;
-
+            numEntries = endIndex - index;
             console.log(i);
             console.log(endIndex);
             console.log(numEntries);
 
-            if(i == -1){
-                console.log("Couldn't find start");
-                i = 0;
+            if(index == -1){
+                console.log("Couldn't find start date");
+                index = 0;
             }
-
             
             if( endIndex == -1){
-                console.log("Couldn't find end");
+                console.log("Couldn't find end date");
                 endIndex = meter.uncontrolled.meterData.length;
             }
-            
         }
 
-        for(i; i < endIndex; i++)
-        {          
-            var entry = meter.uncontrolled.meterData[i].dayValues;
+        for(index; index < endIndex; index++)
+        {  
 
+            var entry = meter.uncontrolled.meterData[index].dayValues;
+            var sum = 0;
+            var nullCount = 0;
+            
             for(var timeEntry in entry){
                 if(entry[timeEntry] != null){
-                    timeValues[timeEntry] += parseFloat(entry[timeEntry]);
-                }
+                    if(action == "averageDay") timeValues[timeEntry] += parseFloat(entry[timeEntry]);
+                    else if(action == "summedDays") sum += parseFloat(entry[timeEntry]);
+
+                } else {nullCount++;}
+            } 
+
+            if(action == "summedDays") { 
+                timeValues.push(sum); 
+            }
+        }   
+
+        if(action == "averageDay"){ 
+            for (var timeValue in timeValues) {
+                timeValues[timeValue] /= numEntries; 
             }
         }
-
-        for (var timeValue in timeValues)
-            timeValues[timeValue] /= numEntries;
 
         res.send({id:meter.uncontrolled.id, meterData:timeValues});
     }
 
-    loadCSV(csvFile, callback);
+    loadCSV(csvFile, callback, action);
 });
 
 

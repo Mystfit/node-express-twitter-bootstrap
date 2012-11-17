@@ -5,9 +5,20 @@ html
         link(rel='stylesheet', href='css/bootstrap.css') 
         link(rel='stylesheet', href='css/bootstrap-responsive.css') 
         script(src='js/jquery-1.7.1.min.js')
-        script(src='js/bootstrap.min.js')
+        script(src='js/bootstrap.min.js')   
         script(src='js/d3/d3.v2.js')
+        script(src='js/jcanvas.min.js')
+        script(src='bin-packing/js/packer.growing.js')
         script(src='js/visApi.js')
+        script
+            $(document).ready(function() {
+                d3.json('getDayValues', function(json){
+                    generateLayeredGraph(json.meterData, "average");
+                    //stackedBoxes(json.meterData);
+                });
+            });
+
+
     body 
         div.navbar 
             div.navbar-inner
@@ -19,6 +30,7 @@ html
                                 a(href='#') Home 
 
         div.graphArea
+            | <canvas width='1024' height='400'</canvas>
         div.controls
             button Button
 
