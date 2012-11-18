@@ -1,0 +1,10 @@
+{
+    "name": "Tring_Frontend_Experiments",
+    "version": "0.0.1",
+    "private": "false",
+    "dependencies": {
+        "express": "*",
+        "jade": "*",
+	"connect": "*"
+    }
+}

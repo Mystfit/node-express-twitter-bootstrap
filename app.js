@@ -1,6 +1,5 @@
 var express = require('express');
 var http = require('http');
-var d3 = require('d3');
 var csv = require('../Front/src/api/csv');
 var fs = require('fs');
 var url = require('url');
@@ -29,7 +28,7 @@ app.configure(function(){
 	app.use(express.methodOverride());
 	app.use(express.static(__dirname + '/static'));
 	app.use(app.router);
-    app.use(function(err, req, res, next){ res.render('500.ejs', { locals: { error: err },status: 500 }); });
+    //app.use(function(err, req, res, next){ res.render('500.ejs', { locals: { error: err },status: 500 }); });
 	app.enable("jsonp callback");
 });
 
@@ -243,5 +242,6 @@ loadCSV = function(csvFile, callback, action)
 
 /* The 404 Route (ALWAYS Keep this as the last route) */
 app.get('/*', function(req, res){
-    res.render('404.ejs', locals);
+    res.send("404");
+    //res.render('404.ejs', locals);
 });
