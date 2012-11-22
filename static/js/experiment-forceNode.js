@@ -1,15 +1,24 @@
 nodeRibbon = function(sampleData, filtered)
 {
+	var w = 960;
+    h = 500;
+    fill = d3.scale.category20();
+
 	nodes = [];
     links = [];
+
+    var xTick;
+    var yPos;
 
 	if(!filtered)
 	{
 		//Concat data in one array
-		for(var i = 0; i < sampleData.meterData.length/25; i++)
+		for(var i = 500; i < sampleData.meterData.length/25 + 500; i++)
 		{
 			var lastNode;
 			var firstNode;
+
+			xTick = ((i + 500) / (sampleData.meterData.length/25 + 500)) * w;
 
 			for(var j = 0; j <= sampleData.meterData[i].dayValues.length; j+=2)
 			{
@@ -17,7 +26,7 @@ nodeRibbon = function(sampleData, filtered)
 				if(value == null)
 					value = 0;
 
-				node = {name:sampleData.meterData[i].date + "-" + j, group:i};
+				node = {name:sampleData.meterData[i].date + "-" + j, group:i, x:0, y:0, radius:value*15};
 				nodes.push(node);
 				
 				if(j == 0) {
@@ -25,13 +34,23 @@ nodeRibbon = function(sampleData, filtered)
 					lastNode = firstNode;
 				 } 
 				else if(j > 0 && j < sampleData.meterData.length){
-					console.log(value);
-				 	links.push({source:node, target:lastNode, value:value*30});
+
+				 	node.x = xTick;
+				 	node.y = lastNode.y + value*15;
+
+				 	links.push({source:node, target:lastNode, value:node.y - lastNode.y});
+
+
+				 	console.log(xTick);
+
 				 	lastNode = node;
 
 				 	if(j >= sampleData.meterData[i].dayValues.length)
 				 		links.push({source:node, target:firstNode, value:value*30});
 				}
+
+
+
 			}
 		}
 
@@ -40,9 +59,7 @@ nodeRibbon = function(sampleData, filtered)
 	}
 
 
-	var w = 960;
-    h = 500;
-    fill = d3.scale.category20();
+	
     
 
 	var vis = d3.select(".graphArea").append("svg:svg")
@@ -75,6 +92,7 @@ nodeRibbon = function(sampleData, filtered)
 	  vis.selectAll("circle.node")
 	      .attr("cx", function(d) { return d.x; })
 	      .attr("cy", function(d) { return d.y; })
+	      .attr("r", function(d) { return d.radius; })
 	      .style("fill", function(d) { return fill(d.group); })
 	      .style("size", function(d) {return d.size});
 	});
