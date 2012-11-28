@@ -1,4 +1,4 @@
-nodeRibbon = function(sampleData, filtered)
+pollock = function(sampleData, filtered, dataType)
 {
 	var w = 960;
     h = 500;
@@ -12,45 +12,146 @@ nodeRibbon = function(sampleData, filtered)
 
 	if(!filtered)
 	{
-		//Concat data in one array
-		for(var i = 500; i < sampleData.meterData.length/25 + 500; i++)
+
+		if(dataType == 'halfday')
 		{
-			var lastNode;
-			var firstNode;
-
-			xTick = ((i + 500) / (sampleData.meterData.length/25 + 500)) * w;
-
-			for(var j = 0; j <= sampleData.meterData[i].dayValues.length; j+=2)
+			for(var i = 0; i < sampleData.length; i++)
 			{
-				var value = sampleData.meterData[i].dayValues[j];
+				var value = sampleData[i];
 				if(value == null)
 					value = 0;
 
-				node = {name:sampleData.meterData[i].date + "-" + j, group:i, x:0, y:0, radius:value*15};
+				node = {group:1, x:0, y:0, radius:value*15};
 				nodes.push(node);
 				
-				if(j == 0) {
+				if(i == 0) {
+					node.fixed = true;
+					node.x = 0 + 20;
+					node.y = h * 0.5;
 					firstNode = node;
 					lastNode = firstNode;
 				 } 
-				else if(j > 0 && j < sampleData.meterData.length){
+				else if(i > 0 && i < sampleData.length){
 
 				 	node.x = xTick;
 				 	node.y = lastNode.y + value*15;
 
 				 	links.push({source:node, target:lastNode, value:node.y - lastNode.y});
-
-
-				 	console.log(xTick);
-
+				 	
 				 	lastNode = node;
 
-				 	if(j >= sampleData.meterData[i].dayValues.length)
+				 	//Connect last node to first node
+				 	if(i >= sampleData.length){
+				 		//node.fixed=true;
+				 		node.x = w - 20;
+				 		node.y = h * 0.5;
+
 				 		links.push({source:node, target:firstNode, value:value*30});
+				 	}
 				}
+			}
+		}
+		else if(dataType == 'rangedhalfday')
+		{
+			for(var day = 0; day < sampleData.length; day++)
+			{
+				for(var i = 0; i < sampleData[day].length; i++)
+				{
+					var value = sampleData[day][i];
+					if(value == null)
+						value = 0;
+
+					node = {group:day, x:(i / sampleData[day].length) * w, y:value/5 * h, radius:value*20, strength:5};
+					nodes.push(node);
+
+					
+					if(i == 0) {
+						node.fixed = true;
+						//node.x = 0 + 20;
+						node.y = node.y + h * 0.5;
+						firstNode = node;
+						lastNode = firstNode;
+					 } 
+
+					else if(i > 0 && i < sampleData[day].length){
+
+					 	//node.x = xTick;
+					 	//node.y = lastNode.y + value*15;
+
+					 	var dist = Math.sqrt(Math.pow(node.x - lastNode.x, 2) + Math.pow(node.y - lastNode.y, 2)) * 0.1;
 
 
+					 	links.push({source:node, target:lastNode, value:dist });
+					 	lastNode = node;
 
+					 	console.log(node);
+
+					 	if(node.value == undefined)
+					 		node.value = 0;
+
+					 	if(day > 0){
+					 		links.push({
+					 			source:node, 
+					 			target:nodes[(day-1)*sampleData[day].length + i], 
+					 			value:node.radius*2 + 2
+					 		 });
+					 	}
+
+					 	//Connect last node to first node
+					 	if(i == sampleData[day].length-1){
+
+					 		node.fixed=true;
+					 		//node.x = w - 20;
+					 		node.y = node.y + h * 0.5;
+
+				 		//links.push({source:node, target:firstNode, value:value*30});
+					 	}
+
+					} 
+
+
+				}
+			}
+
+		}
+		else
+		{
+
+			//Concat data in one array
+			for(var i = 500; i < sampleData.meterData.length/25 + 500; i++)
+			{
+				var lastNode;
+				var firstNode;
+
+				xTick = ((i + 500) / (sampleData.meterData.length/25 + 500)) * w;
+
+				for(var j = 0; j <= sampleData.meterData[i].dayValues.length; j+=2)
+				{
+					var value = sampleData.meterData[i].dayValues[j];
+					if(value == null)
+						value = 0;
+
+					node = {name:sampleData.meterData[i].date + "-" + j, group:i, x:0, y:0, radius:value*15, strength:5};
+					nodes.push(node);
+					
+					if(j == 0) {
+						firstNode = node;
+						lastNode = firstNode;
+					 } 
+					else if(j > 0 && j < sampleData.meterData.length){
+
+					 	node.x = xTick;
+					 	node.y = lastNode.y + value*15;
+
+					 	links.push({source:node, target:lastNode, value:node.y - lastNode.y});
+					 	
+					 	lastNode = node;
+
+					 	//Connect last node to first node
+					 	if(j >= sampleData.meterData[i].dayValues.length)
+					 		links.push({source:node, target:firstNode, value:value*30});
+					}
+				}
 			}
 		}
 
@@ -74,8 +175,10 @@ nodeRibbon = function(sampleData, filtered)
 	    .nodes(nodes)
 	    .links(links)
 	    .size([w, h])
+	    .gravity(0.1)
 	    .linkDistance(function(d) { return d.value; })
-	    .linkStrength(5);
+	    .linkStrength(function(d) { return 10; console.log(d.strength);});
+	    
 
 	var cursor = vis.append("svg:circle")
 	    .attr("r", 30)
@@ -87,7 +190,9 @@ nodeRibbon = function(sampleData, filtered)
 	      .attr("x1", function(d) { return d.source.x; })
 	      .attr("y1", function(d) { return d.source.y; })
 	      .attr("x2", function(d) { return d.target.x; })
-	      .attr("y2", function(d) { return d.target.y; });
+	      .attr("y2", function(d) { return d.target.y; })
+	      .attr("visible", false)
+	      .style("lineStyle", '#fff');
 
 	  vis.selectAll("circle.node")
 	      .attr("cx", function(d) { return d.x; })

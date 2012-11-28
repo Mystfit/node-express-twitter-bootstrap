@@ -12,8 +12,26 @@ html
         script(src='js/experiment-forceNode.js')
         script
             $(document).ready(function() {
-                d3.json('getRaw?meter=uncontrolled', function(json){
-                    nodeRibbon(json, false);
+                var url = 'rangeValues';
+                var yearA = 2011;
+                var monthA = 12;
+                var dayA=20;
+                var yearB = 2011;
+                var monthB = 12;
+                var dayB=30;
+                var controlled = 1;
+                requestURL = 'http://tringlightningbolt.com/' + url
+                + '?yearA=' + yearA
+                + '&monthA=' + monthA
+                + '&dayA=' + dayA 
+                + '&yearB=' + yearB
+                + '&monthB=' + monthB
+                + '&dayB=' + dayB 
+                + '&controlled=' + controlled;
+
+                console.log(requestURL);
+                d3.json(requestURL, function(json){
+                    pollock(json, false, 'rangedhalfday');
                 });
             });
 
