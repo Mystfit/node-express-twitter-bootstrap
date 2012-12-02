@@ -44,8 +44,7 @@ getPowerData = function(timeType, startRange, endRange
 
 pollock = function(sampleData, dataType)
 {
-	var color = d3.scale.ordinal()
-    .range(["#98abc5", "#8a89a6", "#7b6888", "#6b486b", "#a05d56", "#d0743c", "#ff8c00"]);
+	
 
 	svg.selectAll("circle").remove();
 	svg.selectAll("path").remove();
@@ -61,23 +60,35 @@ pollock = function(sampleData, dataType)
 
 	var pieAngles = pie(sampleData);
 
-	var arc = d3.svg.arc()
-	    .innerRadius(0)
-	    .outerRadius(radius - 20);
+	console.log()
 
 	var largest =0;
 	var smallest = 0;
+
 	console.log(largest, smallest);
 
 	for(var ang in pieAngles)
 	{
 		var angle = pieAngles[ang];
-		diff = angle.endAngle - angle.startAngle;
+		diff = angle.data;
 		
 		if(largest == 0 && smallest == 0) smallest = largest = diff;
 		if(Math.max(diff, largest) > largest) largest = diff;
 		if(Math.min(diff, smallest) < smallest) smallest = diff;
 	}
+
+	var innerRad =radius;
+	var outerRad = radius + largest;
+	//var innerRad = radius;
+	//var outerRad = radius * largest;
+
+	var arc = d3.svg.arc()
+	    .innerRadius(innerRad)
+	    .outerRadius(outerRad);
+
+	var color = d3.scale.linear()
+    	.range(["#4188D2", "#FFAD40", "FF8673"])
+    	.domain([smallest, largest]);
 
 
 	for(var circ in pieAngles)
@@ -96,16 +107,16 @@ pollock = function(sampleData, dataType)
 			.attr("cx", xMid)
 			.attr("cy", yMid)
 			.attr("r", 0)
-			.attr("fill", function(d,i) { return color(i); })
+			.attr("fill", color(angleObj.data))
 			.transition().duration(750).attr("r", circRadius);
+
+			console.log(angle.data);
 	}
-
-
 
 	var path = svg.selectAll("path")
     	.data(pieAngles)
   		.enter().append("path")
-    	.attr("fill", function(d, i) { return color(i); })
+    	.attr("fill", function(d, i) { return color(d.value); })
     	.attr("d", arc);
     d3.selectAll("input").on("change", change);
 
