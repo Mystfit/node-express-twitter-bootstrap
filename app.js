@@ -56,6 +56,11 @@ app.get('/', function(req,res){
 
 app.get('/pollock', function(req,res){
     locals.date = new Date().toLocaleDateString();
+    res.render('pollock.jade', locals);
+});
+
+app.get('/forceNode', function(req,res){
+    locals.date = new Date().toLocaleDateString();
     res.render('forceNode.jade', locals);
 });
 

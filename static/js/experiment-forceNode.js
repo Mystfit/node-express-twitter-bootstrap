@@ -10,58 +10,28 @@ pollock = function(sampleData, filtered, dataType)
     var xTick;
     var yPos;
 
+
+    sampleData = sampleData.powerData;
+
+
+
 	if(!filtered)
 	{
-
-		if(dataType == 'halfday')
-		{
-			for(var i = 0; i < sampleData.length; i++)
-			{
-				var value = sampleData[i];
-				if(value == null)
-					value = 0;
-
-				node = {group:1, x:0, y:0, radius:value*15};
-				nodes.push(node);
-				
-				if(i == 0) {
-					node.fixed = true;
-					node.x = 0 + 20;
-					node.y = h * 0.5;
-					firstNode = node;
-					lastNode = firstNode;
-				 } 
-				else if(i > 0 && i < sampleData.length){
-
-				 	node.x = xTick;
-				 	node.y = lastNode.y + value*15;
-
-				 	links.push({source:node, target:lastNode, value:node.y - lastNode.y});
-				 	
-				 	lastNode = node;
-
-				 	//Connect last node to first node
-				 	if(i >= sampleData.length){
-				 		//node.fixed=true;
-				 		node.x = w - 20;
-				 		node.y = h * 0.5;
-
-				 		links.push({source:node, target:firstNode, value:value*30});
-				 	}
-				}
-			}
-		}
-		else if(dataType == 'rangedhalfday')
+		if(dataType == 'rangedhalfday')
 		{
 			for(var day = 0; day < sampleData.length; day++)
 			{
-				for(var i = 0; i < sampleData[day].length; i++)
+				console.log(day);
+				for(var i = 0; i < sampleData[day].values.length; i++)
 				{
-					var value = sampleData[day][i];
+					var value = sampleData[day].values[i];
 					if(value == null)
 						value = 0;
 
-					node = {group:day, x:(i / sampleData[day].length) * w, y:value/5 * h, radius:value*20, strength:5};
+					console.log(value);
+
+
+					node = {group:day, x:(i / sampleData[day].values.length) * w, y:value/5 * h, radius:value*20, strength:5};
 					nodes.push(node);
 
 					
@@ -73,7 +43,7 @@ pollock = function(sampleData, filtered, dataType)
 						lastNode = firstNode;
 					 } 
 
-					else if(i > 0 && i < sampleData[day].length){
+					else if(i > 0 && i < sampleData[day].values.length){
 
 					 	//node.x = xTick;
 					 	//node.y = lastNode.y + value*15;
@@ -92,7 +62,7 @@ pollock = function(sampleData, filtered, dataType)
 					 	if(day > 0){
 					 		links.push({
 					 			source:node, 
-					 			target:nodes[(day-1)*sampleData[day].length + i], 
+					 			target:nodes[(day-1)*sampleData[day].values.length + i], 
 					 			value:node.radius*2 + 2
 					 		 });
 					 	}
@@ -110,47 +80,6 @@ pollock = function(sampleData, filtered, dataType)
 					} 
 
 
-				}
-			}
-
-		}
-		else
-		{
-
-			//Concat data in one array
-			for(var i = 500; i < sampleData.meterData.length/25 + 500; i++)
-			{
-				var lastNode;
-				var firstNode;
-
-				xTick = ((i + 500) / (sampleData.meterData.length/25 + 500)) * w;
-
-				for(var j = 0; j <= sampleData.meterData[i].dayValues.length; j+=2)
-				{
-					var value = sampleData.meterData[i].dayValues[j];
-					if(value == null)
-						value = 0;
-
-					node = {name:sampleData.meterData[i].date + "-" + j, group:i, x:0, y:0, radius:value*15, strength:5};
-					nodes.push(node);
-					
-					if(j == 0) {
-						firstNode = node;
-						lastNode = firstNode;
-					 } 
-					else if(j > 0 && j < sampleData.meterData.length){
-
-					 	node.x = xTick;
-					 	node.y = lastNode.y + value*15;
-
-					 	links.push({source:node, target:lastNode, value:node.y - lastNode.y});
-					 	
-					 	lastNode = node;
-
-					 	//Connect last node to first node
-					 	if(j >= sampleData.meterData[i].dayValues.length)
-					 		links.push({source:node, target:firstNode, value:value*30});
-					}
 				}
 			}
 		}

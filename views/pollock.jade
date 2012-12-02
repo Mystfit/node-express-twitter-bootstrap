@@ -1,0 +1,82 @@
+!!! 5
+html 
+    head 
+        title= title 
+        link(rel='stylesheet', href='css/bootstrap.css') 
+        link(rel='stylesheet', href='css/bootstrap-responsive.css') 
+        link(rel='stylesheet', href='css/experiment-forceNode.css') 
+        link(rel='stylesheet', href='css/smoothness/jquery-ui-1.9.2.custom.min.css') 
+        script(src='js/jquery-1.7.1.min.js')
+        script(src='js/jquery-ui-1.9.2.custom.min.js')
+        script(src='js/bootstrap.min.js')   
+        script(src='js/d3/d3.v2.js')
+        script(src='js/jcanvas.min.js')
+        script(src='js/experiment-pollock.js')
+        script
+            $(document).ready(function() {
+
+                init();
+
+                
+
+                $("#dayBtn").click(function(){
+                    getPowerData("day", 
+                        new Date( $("#startDatePicker").val() ),
+                        new Date( $("#endDatePicker").val() )
+                    );
+                });
+
+                $("#weekBtn").click(function(){
+                     getPowerData("week", 
+                        new Date( $("#startDatePicker").val() ),
+                        new Date( $("#endDatePicker").val() )
+                    );
+                });
+
+                $("#monthBtn").click(function(){
+                   getPowerData("month", 
+                        new Date( $("#startDatePicker").val() ),
+                        new Date( $("#endDatePicker").val() )
+                    );
+                });
+
+                $( "#startDatePicker" ).datepicker({
+                    changeMonth: true,
+                    changeYear: true,
+                    dateFormat: "yy-mm-dd"
+                }).val("2011-11-10");
+
+                 $( "#endDatePicker" ).datepicker({
+                    changeMonth: true,
+                    changeYear: true,
+                    dateFormat: "yy-mm-dd"
+                }).val("2011-11-30");
+
+                 getPowerData("day", 
+                        new Date( $("#startDatePicker").val() ),
+                        new Date( $("#endDatePicker").val() )
+                );
+
+
+            });
+
+
+    body 
+        div.navbar 
+            div.navbar-inner
+                div.container 
+                    a(href='#').brand #{title} 
+                    div.nav-collapse
+                        ul.nav 
+                            li.active 
+                                a(href='#') Home 
+
+        div.graphArea
+        div.controls
+            button#dayBtn Day
+            button#weekBtn Week
+            button#monthBtn Month
+            input#startDatePicker
+            input#endDatePicker
+
+
