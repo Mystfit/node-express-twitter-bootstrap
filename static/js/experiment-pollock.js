@@ -13,8 +13,7 @@ init = function()
 	    .attr("transform", "translate(" + width / 2 + "," + height / 2 + ")");
 }
 
-getPowerData = function(timeType, startRange, endRange
-){
+getPowerData = function(timeType, startRange, endRange, clock){
 	var url = "http://tringlightningbolt.com/";
 
 	rangeValueQuery = function(){
@@ -35,20 +34,19 @@ getPowerData = function(timeType, startRange, endRange
 					+ "&dayB=" + endRange.getDate()
 					+ "&controlled=1";
 	}
+
 	
 	d3.json((timeType == "day") ? rangeValueQuery() : rangeSumQuery(), function(json){
-		(json.powerData.values != undefined) ? pollock(json.powerData, "values") : pollock(json.powerData, "sums");
+		pollock(json.powerData, clock);
 	});   
 }
 
 
-pollock = function(sampleData, dataType)
+pollock = function(sampleData, clock)
 {
-	
 
 	svg.selectAll("circle").remove();
 	svg.selectAll("path").remove();
-
 
 	var pie = d3.layout.pie().sort(null).value(function(d){
 		var result;
@@ -59,18 +57,13 @@ pollock = function(sampleData, dataType)
 	if(sampleData.values != undefined) sampleData = sampleData.values;
 
 	var pieAngles = pie(sampleData);
-
-	console.log()
-
 	var largest =0;
 	var smallest = 0;
 
-	console.log(largest, smallest);
-
-	for(var ang in pieAngles)
+	for(var ang in sampleData)
 	{
-		var angle = pieAngles[ang];
-		diff = angle.data;
+		var angle = sampleData[ang];
+		diff = angle;
 		
 		if(largest == 0 && smallest == 0) smallest = largest = diff;
 		if(Math.max(diff, largest) > largest) largest = diff;
@@ -89,28 +82,31 @@ pollock = function(sampleData, dataType)
 	var color = d3.scale.linear()
     	.range(["#4188D2", "#FFAD40", "FF8673"])
     	.domain([smallest, largest]);
+   
 
+    if(clock)
+    {
+    	
+	} else {
+		for(var circ in sampleData)
+		{
+			var angleObj = pieAngles[circ];
+			var xStart = Math.cos(angleObj.startAngle - Math.PI/2) * radius;
+			var yStart = Math.sin(angleObj.startAngle - Math.PI/2) * radius;
+			var xEnd = Math.cos(angleObj.endAngle - Math.PI/2) * radius;
+			var yEnd = Math.sin(angleObj.endAngle - Math.PI/2) * radius;
+			var xMid = (xStart + xEnd) *0.5;
+			var yMid = (yStart + yEnd) *0.5;
+			var circRadius = distance(xStart, yStart, xEnd, yEnd) * 0.5;
 
-	for(var circ in pieAngles)
-	{
-		var angleObj = pieAngles[circ];
-		var xStart = Math.cos(angleObj.startAngle - Math.PI/2) * radius;
-		var yStart = Math.sin(angleObj.startAngle - Math.PI/2) * radius;
-		var xEnd = Math.cos(angleObj.endAngle - Math.PI/2) * radius;
-		var yEnd = Math.sin(angleObj.endAngle - Math.PI/2) * radius;
-		var xMid = (xStart + xEnd) *0.5;
-		var yMid = (yStart + yEnd) *0.5;
-		var circRadius = distance(xStart, yStart, xEnd, yEnd) * 0.5;
-
-		svg.append("circle")
-			.data(pieAngles)
-			.attr("cx", xMid)
-			.attr("cy", yMid)
-			.attr("r", 0)
-			.attr("fill", color(angleObj.data))
-			.transition().duration(750).attr("r", circRadius);
-
-			console.log(angle.data);
+			svg.append("circle")
+				.data(pieAngles)
+				.attr("cx", xMid)
+				.attr("cy", yMid)
+				.attr("r", 0)
+				.attr("fill", color(sampleData[circ]))
+				.transition().duration(750).attr("r", circRadius);
+		}
 	}
 
 	var path = svg.selectAll("path")

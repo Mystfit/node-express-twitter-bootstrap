@@ -17,26 +17,38 @@ html
 
                 init();
 
-                
+                var bClockToggle = false;
 
                 $("#dayBtn").click(function(){
                     getPowerData("day", 
                         new Date( $("#startDatePicker").val() ),
-                        new Date( $("#endDatePicker").val() )
+                        new Date( $("#endDatePicker").val() ),
+                        bClockToggle
                     );
                 });
 
                 $("#weekBtn").click(function(){
                      getPowerData("week", 
                         new Date( $("#startDatePicker").val() ),
-                        new Date( $("#endDatePicker").val() )
+                        new Date( $("#endDatePicker").val() ),
+                        bClockToggle
                     );
                 });
 
                 $("#monthBtn").click(function(){
                    getPowerData("month", 
                         new Date( $("#startDatePicker").val() ),
-                        new Date( $("#endDatePicker").val() )
+                        new Date( $("#endDatePicker").val() ),
+                        bClockToggle
+                    );
+                });
+
+                $("#switchCirclesBtn").click(function(){
+                    bClockToggle = !bClockToggle;                    
+                    getPowerData("day", 
+                        new Date( $("#startDatePicker").val() ),
+                        new Date( $("#endDatePicker").val() ), 
+                        bClockToggle
                     );
                 });
 
@@ -54,7 +66,8 @@ html
 
                  getPowerData("day", 
                         new Date( $("#startDatePicker").val() ),
-                        new Date( $("#endDatePicker").val() )
+                        new Date( $("#endDatePicker").val() ),
+                        bClockToggle
                 );
 
 
@@ -76,6 +89,7 @@ html
             button#dayBtn Day
             button#weekBtn Week
             button#monthBtn Month
+            button#switchCirclesBtn Switch Clocks
             input#startDatePicker
             input#endDatePicker
 
