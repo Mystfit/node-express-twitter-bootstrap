@@ -14,63 +14,7 @@ html
         script(src='js/experiment-pollock.js')
         script
             $(document).ready(function() {
-
                 init();
-
-                var bClockToggle = false;
-
-                $("#dayBtn").click(function(){
-                    getPowerData("day", 
-                        new Date( $("#startDatePicker").val() ),
-                        new Date( $("#endDatePicker").val() ),
-                        bClockToggle
-                    );
-                });
-
-                $("#weekBtn").click(function(){
-                     getPowerData("week", 
-                        new Date( $("#startDatePicker").val() ),
-                        new Date( $("#endDatePicker").val() ),
-                        bClockToggle
-                    );
-                });
-
-                $("#monthBtn").click(function(){
-                   getPowerData("month", 
-                        new Date( $("#startDatePicker").val() ),
-                        new Date( $("#endDatePicker").val() ),
-                        bClockToggle
-                    );
-                });
-
-                $("#switchCirclesBtn").click(function(){
-                    bClockToggle = !bClockToggle;                    
-                    getPowerData("day", 
-                        new Date( $("#startDatePicker").val() ),
-                        new Date( $("#endDatePicker").val() ), 
-                        bClockToggle
-                    );
-                });
-
-                $( "#startDatePicker" ).datepicker({
-                    changeMonth: true,
-                    changeYear: true,
-                    dateFormat: "yy-mm-dd"
-                }).val("2011-11-10");
-
-                 $( "#endDatePicker" ).datepicker({
-                    changeMonth: true,
-                    changeYear: true,
-                    dateFormat: "yy-mm-dd"
-                }).val("2011-11-30");
-
-                 getPowerData("day", 
-                        new Date( $("#startDatePicker").val() ),
-                        new Date( $("#endDatePicker").val() ),
-                        bClockToggle
-                );
-
-
             });
 
 
@@ -84,13 +28,20 @@ html
                             li.active 
                                 a(href='#') Home 
 
-        div.graphArea
-        div.controls
-            button#dayBtn Day
-            button#weekBtn Week
-            button#monthBtn Month
-            button#switchCirclesBtn Switch Clocks
+        h3#currentDate
+        div#graphArea
+        div#controls
+            div#slider-range-min
+            div.btn-group
+                button#dayBtn.btn Day
+                button#weekBtn.btn Week
+                button#monthBtn.btn Month
+            div#dayOptions
+                label Number of day data points:
+                select#numCircles
+                    option 12
+                    option 24
+                    option 48
+            label Target date: 
             input#startDatePicker
-            input#endDatePicker
-
-
+            button#changePollockType Switch pollock type
