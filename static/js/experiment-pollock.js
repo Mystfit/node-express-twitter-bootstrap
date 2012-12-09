@@ -5,7 +5,9 @@ var width = 960,
 var svg;
 var color;
 
-init = function()
+var bDualClocks = false;
+
+initPollock = function()
 {
     svg = d3.select("#graphArea").append("svg")
 	    .attr("width", width)
@@ -17,6 +19,7 @@ init = function()
     	.range(["#4188D2", "#FFAD40", "FF8673"]);
 
     var bClockToggle = false;
+    var bDualClocks = true;
 	var viewingRange = "day";
 	var defaultDateStr = "2011-11-10";
 	var defaultDate = new Date(defaultDateStr);
@@ -29,9 +32,7 @@ init = function()
 	    changeYear: true,
 	    dateFormat: "yy-mm-dd"
 	}).val(defaultDateStr).change(function(){
-		var numCircles;
-		if(viewingRange == "day") numCircles = $("#numCircles").val();
-	    getPowerData(viewingRange,  new Date( $("#startDatePicker").val() ), pollockFunc, numCircles);
+		updateGraph();
 	});
 
 	$( "#slider-range-min" ).slider({
@@ -40,25 +41,15 @@ init = function()
 	    min: 1,
 	    max: new Date(defaultDate.getFullYear(), defaultDate.getMonth()+1, 0).getDate(),
 	    slide: function( event, ui ) {
-	        var targetMonth = new Date($("#startDatePicker").val());
-	        var numCircles;
-
-	        if(viewingRange == "day") {
-	        	targetMonth.setDate(ui.value);
-	        	numCircles = $("#numCircles").val();
-	        }
-	        else if(viewingRange == "week") {targetMonth.setDate(ui.value * 5);}
-	        else if(viewingRange == "month") {targetMonth.setMonth(ui.value);}
-	        
-	        getPowerData(viewingRange, targetMonth, pollockFunc, numCircles);
+	        updateGraph();
 	    }
 	});
 
 	$("#dayBtn").click(function(){
 	    viewingRange = "day";
-	    var targetMonth = new Date($("#startDatePicker").val());
+	    updateGraph();
 
-	    getPowerData("day", targetMonth, pollockFunc, $("#numCircles").val());
+	    var targetMonth = new Date($("#startDatePicker").val());
 	    
 	    $( "#slider-range-min" ).slider("option", "max", 
 	        new Date(targetMonth.getFullYear(), targetMonth.getMonth()+1, 0).getDate()
@@ -68,41 +59,59 @@ init = function()
 
 	$("#weekBtn").click(function(){
 	    viewingRange = "week";
-	    getPowerData(viewingRange, new Date( $("#startDatePicker").val() ), pollockFunc);
+	    updateGraph();
 	    $( "#slider-range-min" ).slider("option", "max", 5);
 	    $("#dayOptions").hide();
 	});
 
 	$("#monthBtn").click(function(){
 	    viewingRange = "month";
-	    getPowerData("month", new Date( $("#startDatePicker").val() ), pollockFunc);
-	    $( "#slider-range-min" ).slider("option", "max", 11);
-	    $("#dayOptions").hide();
+	    updateGraph();
 	});
 
 	$("#numCircles").change(function(){
-		var numCircles;
-		if(viewingRange == "day") numCircles = $("#numCircles").val(); 
-		getPowerData(viewingRange,  new Date( $("#startDatePicker").val() ), pollockFunc, numCircles);
-
+		updateGraph();
 	});
 
 	$("#changePollockType").click(function(){
 		bClockToggle = !bClockToggle;
 		(bClockToggle) ? pollockFunc = pollockPercentage : pollockFunc = clockPollock;
-
-		var numCircles;
-		if(viewingRange == "day") numCircles = $("#numCircles").val();
-
-	    getPowerData(viewingRange,  new Date( $("#startDatePicker").val() ), pollockFunc, numCircles);
+		updateGraph();
 	});
+
+	$("#dualClocks").click(function(){
+		bDualClocks = !bDualClocks;
+		updateGraph();
+	});
+
+	function updateGraph()
+	{
+		var numCircles;
+		var useClocks;
+		var targetMonth = new Date($("#startDatePicker").val());
+		var sliderVal = $( "#slider-range-min" ).slider("value");
+
+        if(viewingRange == "day") {
+        	targetMonth.setDate(sliderVal);
+        	numCircles = $("#numCircles").val();
+        }
+
+        else if(viewingRange == "week") {targetMonth.setDate(sliderVal * 5);}
+        else if(viewingRange == "month") {targetMonth.setMonth(sliderVal);}
+		
+		if(bDualClocks) useClocks = true;
+
+	    getPowerData(viewingRange, targetMonth, function(d){
+	    	pollockFunc(d, useClocks);
+	    }, numCircles, useClocks);
+	}
 
 
 	//Get initial data from server
-	getPowerData(viewingRange,  new Date( $("#startDatePicker").val() ), pollockFunc, $("#numCircles").val());
+	updateGraph();
 }
 
-getPowerData = function(timeType, startRange, callback, numCircles)
+getPowerData = function(timeType, startRange, callback, numCircles, useClocks)
 {
 	rangeValueQuery = function(date){
 		return url += 'dayValues'
@@ -167,7 +176,6 @@ getPowerData = function(timeType, startRange, callback, numCircles)
 				var modulo = json.powerData.values.length / numCircles;	
 				var sum = 0;
 
-				console.log("Modulo", modulo);
 
 				for(var i = 0; i < json.powerData.values.length; i++){
 					sum += json.powerData.values[i];
@@ -187,15 +195,18 @@ getPowerData = function(timeType, startRange, callback, numCircles)
 
 		callback(response);
 
+
 		$("#currentDate").html(dateString);
 	});   
 }
 
 
-clockPollock = function(sampleData)
+clockPollock = function(sampleData, useClocks)
 {
 	var largest = 0;
 	var smallest = 0;
+
+	console.log(useClocks);
 
 	for(var entry in sampleData)
 	{
@@ -215,12 +226,34 @@ clockPollock = function(sampleData)
 
 	circle.enter()
 		.append("circle").attr("fill", "#FFFFFF");
+	
 
 	circle.transition().duration(750).attr("cx", function(d,i){
-			return Math.cos(i * angleInc - Math.PI/2) * radius;
+			var offset = 0;
+			var result;
+
+			if(useClocks){
+				if(i < sampleData.length/2 ){
+					offset = -radius * 1.1;
+					result = Math.cos(i*2 * angleInc - Math.PI/2) * radius + offset;
+				}else{
+					offset = radius * 1.1;
+					result = Math.cos(i*2 * angleInc - Math.PI/2) * radius + offset;
+				}
+			} else {
+				result = Math.cos(i * angleInc - Math.PI/2) * radius;
+			}
+
+			return result;
 		})
 		.transition().duration(750).attr("cy", function(d,i){
-			return Math.sin(i * angleInc - Math.PI/2) * radius;
+			var result;
+			if(useClocks)
+				result = Math.sin(i*2 * angleInc - Math.PI/2) * radius;
+			else
+				result = Math.sin(i * angleInc - Math.PI/2) * radius;
+			
+			return result;
 		})
 		.transition().duration(750).attr("fill", function(d){ return colour(d);})
 		.transition().duration(750).ease("quad-out").attr("r", function(d){
@@ -260,21 +293,6 @@ pollockPercentage = function(sampleData)
 	var innerRad =radius;
 	var outerRad = radius + largest;
 
-
-	//Interior arcs
-	//-------------
-	// var arc = d3.svg.arc()
-	//     .innerRadius(innerRad)
-	//     .outerRadius(outerRad);
-
-	// var path = svg.selectAll("path")
- //    	.data(pieAngles)
- //  		.enter().append("path")
- //    	.attr("fill", function(d, i) { return colour(d.value); })
- //    	.attr("d", arc);
- //    d3.selectAll("input").on("change", change);
-
-
     //Exterior circles 
 	//----------------
 	var circle = svg.selectAll("circle").data(pieAngles);
@@ -304,20 +322,6 @@ pollockPercentage = function(sampleData)
 		.attr("r", 0)
 		.attr("fill", "#FFFFFF")
 		.remove();
-
- //    function change() {
- //  		path = path.data(pieAngles); // update the data
- //  		path.transition().duration(750).attrTween("d", arcTween); // redraw the arcs
-	// 	svg.selectAll("circle").transition().duration(750).attrTween("r", arcTween); // redraw the arcs
-	// }
-
-	// function arcTween(a) {
-	// 	var i = d3.interpolate(this._current, a);
-	// 	this._current = i(0);
-	// 	return function(t) {
-	//     	return arc(i(t));
-	//   	};
-	// }
 }
 
 distance = function(x, y, x0, y0){
