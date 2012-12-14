@@ -5,16 +5,18 @@ html
         link(rel='stylesheet', href='css/bootstrap.css') 
         link(rel='stylesheet', href='css/bootstrap-responsive.css') 
         link(rel='stylesheet', href='css/experiment-forceNode.css') 
+        link(rel='stylesheet', href='css/jquery.gradientpicker.css') 
         link(rel='stylesheet', href='css/smoothness/jquery-ui-1.9.2.custom.min.css') 
         script(src='js/jquery-1.7.1.min.js')
         script(src='js/jquery-ui-1.9.2.custom.min.js')
+        script(src='js/jquery.gradientpicker.js')
         script(src='js/bootstrap.min.js')   
         script(src='js/d3/d3.v2.js')
         script(src='js/jcanvas.min.js')
         script(src='js/experiment-pollock.js')
         script
             $(document).ready(function() {
-                initPollock();
+                pollock.init();
             });
 
 
@@ -31,19 +33,25 @@ html
         h3#currentDate
         div#graphArea
         div#controls
-            div#slider-range-min
+            div#slider-range
+            div#slider-min
             div.btn-group
                 button#dayBtn.btn Day
                 button#weekBtn.btn Week
                 button#monthBtn.btn Month
-            div#dayOptions
+            
+            button#debugTgl Controls
+            div.debugControls
+                div#dayOptions
                 label Number of day data points:
                 select#numCircles
                     option 12
                     option 24
                     option 48
-            label Target date: 
-            input#startDatePicker
-            button#changePollockType Switch pollock type
-            button#dualClocks Switch dual clocks
+                label Target date: 
+                input#startDatePicker
+                button#changePollockTypeTgl Switch pollock type
+                button#dualClocksTgl Switch dual clocks
+                button#dayRangeTgl Show week ghosts
+
 
