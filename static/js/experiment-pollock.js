@@ -1,7 +1,7 @@
 pollock = {
 
-	width : 960,
-	height : 500,
+	width : 1024,
+	height : 640,
 	radius : 200,
 
  	svg : null,
@@ -116,6 +116,16 @@ pollock = {
 			updateGraph();
 		});
 
+		$("#colourPick").gradientPicker({
+				change: function(points, styles) {
+					for (i = 0; i < styles.length; ++i) {
+						//$left.css("background-image", styles[i]);
+					}
+				},
+				fillDirection: "45deg",
+				controlPoints: ["green 0%", "yellow 50%", "green 100%"]
+			});
+
 
 
 		function updateGraph()
@@ -123,16 +133,19 @@ pollock = {
 			var numCircles;
 			var useClocks;
 			var useRange;
-			var startRange;
+			var startRange = new Date($("#startDatePicker").val());
 			var targetMonth = new Date($("#startDatePicker").val());
+			var endRange = new Date($("#startDatePicker").val());
 			var sliderVal = $( "#slider-min" ).slider("value");
 
 			if(pollock.bDualClocks) useClocks = true;
 			
-			if(pollock.bUseDayRange) 
-				startRange = new Date(targetMonth.getFullYear(), targetMonth.getMonth(), targetMonth.getDate() - targetMonth.getDay());
 
 	        if(viewingRange == "day") {
+	        	if(pollock.bUseDayRange){
+					startRange = new Date(targetMonth.getFullYear(), targetMonth.getMonth(), $( "#slider-range" ).slider("values", 0));
+					endRange = new Date(targetMonth.getFullYear(), targetMonth.getMonth(), $( "#slider-range" ).slider("values", 1));
+				}
 	        	targetMonth.setDate(sliderVal);
 	        	numCircles = $("#numCircles").val();
 	        }
@@ -140,7 +153,7 @@ pollock = {
 	        else if(viewingRange == "week") {targetMonth.setDate(sliderVal * 5);}
 	        else if(viewingRange == "month") {targetMonth.setMonth(sliderVal);}
 
-		    pollock.getPowerData(viewingRange, startRange, targetMonth, function(d){
+		    pollock.getPowerData(viewingRange, startRange, endRange, function(d){
 		    	pollockFunc(d, useClocks);
 		    }, numCircles);
 		}
@@ -303,7 +316,12 @@ pollock = {
 			return d.values;
 		});
 
-		circGroup.enter().append("circle").attr("fill", "#FFFFFF");
+		circGroup.enter().append("circle").attr("fill", "#FFFFFF").on("mouseover", function(d){
+				d3.select(this).style("stroke", "black");
+			}).on("mouseout", function(){
+				d3.select(this).style("stroke", "none");
+			});
+
 		circGroup.transition().duration(750).attr("cx", function(d,i){
 				var offset = 0;
 				var result;
