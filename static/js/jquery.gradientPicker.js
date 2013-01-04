@@ -236,7 +236,7 @@
 		//color-chooser
 		this.$el = $('<div class="gradientPicker-ptConfig" style="visibility: hidden"></div>');
 		$parent.append(this.$el);
-		var $cpicker = $('<div class="color-chooser"></div>');
+		var $cpicker = $('<div class="color-chooser"><image src=\"../images/select.png\" /></div>');
 		this.$el.append($cpicker);
 		var $rmEl = $("<div class='gradientPicker-close'></div>");
 		this.$el.append($rmEl);

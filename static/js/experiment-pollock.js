@@ -10,6 +10,8 @@ pollock = {
 	bDualClocks : true,
 	bUseDayRange : true,
 
+	colours: [],
+
 	init : function()
 	{
 	    pollock.svg = d3.select("#graphArea").append("svg")
@@ -19,7 +21,7 @@ pollock = {
 		   //  .attr("transform", "translate(" + pollock.width / 2 + "," + pollock.height / 2 + ")");
 
 		pollock.colour = d3.scale.linear()
-	    	.range(["#4188D2", "#FFAD40", "FF8673"]);
+	    	.range(["#4188D2", "#FFAD40"]);
 
 	    //var bClockToggle = false;
 	    //var bDualClocks = true;
@@ -116,15 +118,29 @@ pollock = {
 			updateGraph();
 		});
 
-		$("#colourPick").gradientPicker({
+		$("#gradPick").gradientPicker({
 				change: function(points, styles) {
-					for (i = 0; i < styles.length; ++i) {
-						//$left.css("background-image", styles[i]);
-					}
+					pollock.colours = points;
+					updateGraph();
 				},
 				fillDirection: "45deg",
-				controlPoints: ["green 0%", "yellow 50%", "green 100%"]
+				controlPoints: ["#4188D2 0%", "#FFAD40 100%"]
 			});
+
+		// $('#colourPickTest').ColorPicker({
+		// 	color: '#0000ff',
+		// 	flat: true, 
+		// 	onChange: function (hsb, hex, rgb) {
+		// 		console.log(hex);
+		// 		$('#colourPickTest').css('backgroundColor', '#' + hex);
+		// 	}
+		// });
+
+		// $('#colorSelector').ColorPicker({
+		// 	flat: true, 
+		// 	onChange: function (hsb, hex, rgb) {
+		// 		$('#colorSelector div').css('backgroundColor', '#' + hex);
+		// }});
 
 
 
@@ -137,6 +153,10 @@ pollock = {
 			var targetMonth = new Date($("#startDatePicker").val());
 			var endRange = new Date($("#startDatePicker").val());
 			var sliderVal = $( "#slider-min" ).slider("value");
+
+			var pointColours = []
+			for(var point in pollock.colours) pointColours.push(pollock.colours[point].color);
+			pollock.colour.range(pointColours);
 
 			if(pollock.bDualClocks) useClocks = true;
 			
@@ -268,8 +288,6 @@ pollock = {
 				}
 			}
 
-			console.log(json, response);
-
 			callback(response);
 
 			$("#currentDate").html(dateString);
@@ -294,7 +312,13 @@ pollock = {
 			}
 		}
 
-		pollock.colour.domain([smallest, largest]);
+		var domainRange = [];
+		var range = largest - smallest;
+		var increment = range / pollock.colours.length;
+		for(var i=0; i < pollock.colours.length; i++) domainRange.push(smallest + (increment * i));
+
+		pollock.colour.domain(domainRange);
+	console.log(domainRange);
 
 		var radiusMult = largest / smallest;
 		var angleInc = Math.PI*2 / sampleData[0].values.length;
@@ -359,70 +383,5 @@ pollock = {
 			.attr("r", 0)
 			.attr("fill", "#FFFFFF")
 			.remove();
-	},
-
-
-	pollockPercentage : function(sampleData)
-	{
-		var pie = d3.layout.pie().sort(null).value(function(d){
-			var result;
-			(d.sum == undefined) ? result = d : result = d.sum;
-			return result;
-		});
-
-		var pieAngles = pie(sampleData);
-		var largest =0;
-		var smallest = 0;
-
-		for(var ang in sampleData)
-		{
-			var angle = sampleData[ang];
-			diff = angle;
-			
-			if(largest == 0 && smallest == 0) smallest = largest = diff;
-			if(Math.max(diff, largest) > largest) largest = diff;
-			if(Math.min(diff, smallest) < smallest) smallest = diff;
-		}
-
-		var innerRad =pollock.radius;
-		var outerRad = pollock.radius + largest;
-
-	    //Exterior circles 
-		//----------------
-		var circle = pollock.svg.selectAll("circle").data(pieAngles);
-
-		circle.enter().append("circle").attr("fill", "#FFFFFF");
-
-		circle.transition().duration(750).attr("cx", function(d,i){
-				return ((Math.cos(d.startAngle - Math.PI/2) * pollock.radius)
-				 + (Math.cos(d.endAngle - Math.PI/2) * pollock.radius)) *0.5;
-			})
-			.transition().duration(750).attr("cy", function(d,i){
-				return ((Math.sin(d.startAngle - Math.PI/2) * pollock.radius)
-				 + (Math.sin(d.endAngle - Math.PI/2) * pollock.radius)) *0.5;
-			})
-			.transition().duration(750).attr("fill", function(d){ return pollock.colour(d.data);})
-			.transition().duration(750).ease("quad-out").attr("r", function(d){
-				return pollock.distance(
-						Math.cos(d.startAngle - Math.PI/2) * pollock.radius, 
-						Math.sin(d.startAngle - Math.PI/2) * pollock.radius,
-						Math.cos(d.endAngle - Math.PI/2) * pollock.radius, 
-						Math.sin(d.endAngle - Math.PI/2) * pollock.radius
-					) * 0.5;
-			});
-
-		circle.exit()
-			.transition().duration("750")
-			.attr("r", 0)
-			.attr("fill", "#FFFFFF")
-			.remove();
-	},
-
-	distance : function(x, y, x0, y0){
-	    return Math.sqrt((x -= x0) * x + (y -= y0) * y);
-	},
-
-	normalize : function(value, min, max){
-		return (max - value) / (max - min);
 	}
 }
