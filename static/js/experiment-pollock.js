@@ -1,7 +1,7 @@
 pollock = {
 
 	width : 1024,
-	height : 640,
+	height : 500,
 	radius : 200,
 
  	svg : null,
@@ -39,11 +39,19 @@ pollock = {
 		    changeYear: true,
 		    dateFormat: "yy-mm-dd"
 		}).val(defaultDateStr).change(function(){
-			updateGraph();
+			//updateGraph();
 		});
 
 		$("#debugTgl").click(function(){
-			$(".debugControls").toggle();
+			$(".debugControls").toggle('400');
+		});
+
+		$( "#slider-date" ).dateRangeSlider({
+		    bounds:{min: new Date(defaultDate.getFullYear(), defaultDate.getMonth(), 0), 
+		    		max: new Date(defaultDate.getFullYear(), defaultDate.getMonth()+1, 0)
+		    	}});
+		$( "#slider-date" ).on("valuesChanged", function(e, data){
+			 updateGraph();
 		});
 
 		$( "#slider-range" ).slider({
@@ -64,7 +72,7 @@ pollock = {
 		    slide: function( event, ui ) {
 		        updateGraph();
 		    }
-		});
+		}).hide();
 
 		$("#dayBtn").click(function(){
 		    viewingRange = "day";
@@ -127,6 +135,8 @@ pollock = {
 				controlPoints: ["#4188D2 0%", "#FFAD40 100%"]
 			});
 
+		$(".debugControls").hide();
+
 		// $('#colourPickTest').ColorPicker({
 		// 	color: '#0000ff',
 		// 	flat: true, 
@@ -163,8 +173,8 @@ pollock = {
 
 	        if(viewingRange == "day") {
 	        	if(pollock.bUseDayRange){
-					startRange = new Date(targetMonth.getFullYear(), targetMonth.getMonth(), $( "#slider-range" ).slider("values", 0));
-					endRange = new Date(targetMonth.getFullYear(), targetMonth.getMonth(), $( "#slider-range" ).slider("values", 1));
+					startRange = $( "#slider-date" ).dateRangeSlider("values").min;
+					endRange = $( "#slider-date" ).dateRangeSlider("values").max;
 				}
 	        	targetMonth.setDate(sliderVal);
 	        	numCircles = $("#numCircles").val();
@@ -318,7 +328,6 @@ pollock = {
 		for(var i=0; i < pollock.colours.length; i++) domainRange.push(smallest + (increment * i));
 
 		pollock.colour.domain(domainRange);
-	console.log(domainRange);
 
 		var radiusMult = largest / smallest;
 		var angleInc = Math.PI*2 / sampleData[0].values.length;
@@ -330,7 +339,6 @@ pollock = {
 		var groupEnter = svgGroup.enter().append("g");
 		svgGroup.attr("transform", "translate(" + pollock.width / 2 + "," + pollock.height / 2 + ")")
 			.attr("fill-opacity", function(d,i){
-				console.log(i, sampleData.length -1);
 				if(i == sampleData.length -1) return 1
 				return 0.2;
 			});
@@ -341,12 +349,10 @@ pollock = {
 		});
 
 		circGroup.enter().append("circle").attr("fill", "#FFFFFF").on("mouseover", function(d){
-				d3.select(this).style("stroke", "black");
+				d3.select(this).style("stroke", "black").attr("stroke-width", 3);
 			}).on("mouseout", function(){
-				d3.select(this).style("stroke", "none");
-			});
-
-		circGroup.transition().duration(750).attr("cx", function(d,i){
+				d3.select(this).style("stroke", "none").attr("stroke-wdith", 1);
+			}).attr("cx", function(d,i){
 				var offset = 0;
 				var result;
 
@@ -364,7 +370,7 @@ pollock = {
 
 				return result;
 			})
-			.transition().duration(750).attr("cy", function(d,i){
+			.attr("cy", function(d,i){
 				var result;
 				if(useClocks)
 					result = Math.sin(i*2 * angleInc - Math.PI/2) * pollock.radius;
@@ -372,8 +378,11 @@ pollock = {
 					result = Math.sin(i* angleInc - Math.PI/2) * pollock.radius;
 				
 				return result;
-			})
-			.transition().duration(750).attr("fill", function(d){ return pollock.colour(d);})
+			}).append("title").text(function(d){
+				return d + "kwh";
+			});
+
+		circGroup.transition().duration(750).attr("fill", function(d){ return pollock.colour(d);})
 			.transition().duration(750).ease("quad-out").attr("r", function(d){
 				return d * radiusMult ;
 			});

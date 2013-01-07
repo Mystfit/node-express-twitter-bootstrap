@@ -8,8 +8,11 @@ html
         link(rel='stylesheet', href='css/experiment-forceNode.css') 
         link(rel='stylesheet', href='css/colorpicker.css') 
         link(rel='stylesheet', href='css/jquery.gradientpicker.css') 
+        link(rel='stylesheet', href='css/iThing.css') 
+
         script(src='js/jquery-1.7.1.min.js')
         script(src='js/jquery-ui-1.9.2.custom.min.js')
+        script(src='js/jQDateRangeSlider-min.js')
         script(src='js/eye.js')
         script(src='js/utils.js')
         //script(src='js/layout.js?ver=1.0.2')
@@ -32,31 +35,32 @@ html
                     div.nav-collapse
                         ul.nav 
                             li.active 
-                                a(href='#') Home 
+                                a(href='#') Home
+                            li.inactive#debugTgl 
+                                a(href='#') Show Controls        
+        div.debugControls
+            div#gradPick
+            div#dayOptions
+            label Number of day data points:
+            select#numCircles
+                option 48
+                option 24
+            label Target date: 
+            input#startDatePicker
+            button#dayRangeTgl Show week ghosts
 
+        div.btn-group
+                button#dayBtn.btn Day
+                button#weekBtn.btn Week
+                button#monthBtn.btn Month
         h3#currentDate
         div#graphArea
         div#controls
             div#slider-range
             div#slider-min
-            div.btn-group
-                button#dayBtn.btn Day
-                button#weekBtn.btn Week
-                button#monthBtn.btn Month
+            div#slider-date
             
-            button#debugTgl Controls
-            div.debugControls
-                div#gradPick
-                div#dayOptions
-                label Number of day data points:
-                select#numCircles
-                    option 12
-                    option 24
-                    option 48
-                label Target date: 
-                input#startDatePicker
-                button#changePollockTypeTgl Switch pollock type
-                button#dualClocksTgl Switch dual clocks
-                button#dayRangeTgl Show week ghosts
+            
+            
 
 
